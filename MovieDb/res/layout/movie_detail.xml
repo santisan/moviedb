@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+	android:layout_height="match_parent">
+	    	
+    <RelativeLayout 
+		  android:layout_width="match_parent"
+		  android:layout_height="wrap_content" >
+	        
+	    <ImageView
+	        android:id="@+id/poster"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentLeft="true"
+	        android:layout_alignParentTop="true"
+	        android:layout_marginLeft="8dp"
+	        android:layout_marginTop="8dp"
+	        android:src="@drawable/empty_photo"
+	        android:contentDescription="@string/imageview_description" />
+	
+	    <TextView
+	        android:id="@+id/title"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentRight="true"
+	        android:layout_alignTop="@+id/poster"
+	        android:layout_marginLeft="8dp"
+	        android:layout_marginRight="8dp"
+	        android:layout_toRightOf="@+id/poster"
+	        android:text="Title"
+	        android:textSize="@dimen/largeTextSize"
+	        android:textStyle="bold" />
+	
+	    <TextView
+	        android:id="@+id/runtime"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@+id/title"
+	        android:layout_below="@+id/title"
+	        android:layout_marginTop="4dp"
+	        android:text="@string/runtime"
+	        android:textSize="@dimen/smallTextSize" />
+	
+	    <RatingBar
+	        android:id="@+id/ratingBar"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@id/title"
+	        android:layout_below="@+id/runtime"
+	        android:layout_marginTop="4dp"
+	        android:isIndicator="true"
+	        android:numStars="5"
+	        style="@style/RatingBar" />
+	
+	    <TextView
+	        android:id="@+id/votes"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@+id/runtime"
+	        android:layout_below="@+id/ratingBar"
+	        android:text="@string/votes"
+	        android:textSize="@dimen/smallTextSize" />
+		
+	    <TextView
+	        android:id="@+id/overviewTxt"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@+id/votes"
+	        android:layout_below="@+id/votes"
+	        android:layout_marginTop="8dp"
+	        android:text="Overview"
+	        android:textSize="@dimen/mediumTextSize"
+	        android:textStyle="bold" />
+	
+	    <TextView
+	        android:id="@+id/overview"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@+id/overviewTxt"
+	        android:layout_below="@+id/overviewTxt"
+	        android:text="Overview"
+	        android:textSize="@dimen/overviewTextSize" />
+		
+	    <Button
+	        android:id="@+id/trailerBtn"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignLeft="@+id/overview"
+	        android:layout_below="@+id/overview"
+	        android:layout_marginTop="8dp"
+	        android:text="@string/watch_trailer" />
+	
+	</RelativeLayout>
+</ScrollView>

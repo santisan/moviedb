@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"        
+	android:layout_height="fill_parent"
+	android:background="@android:color/transparent">
+	    
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="@dimen/list_thumbnail_size"
+        android:layout_height="@dimen/list_thumbnail_size"
+        android:layout_marginRight="6dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_alignParentLeft="true"
+        android:src="@drawable/empty_photo"
+        android:contentDescription="@string/imageview_description" />
+    
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"        
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/icon"
+        android:background="@android:color/transparent">
+
+        <TextView
+            android:id="@+id/toptext"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/largeTextSize"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/bottomtext"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"  
+            android:layout_marginBottom="4dp"          
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:textSize="@dimen/smallTextSize" />
+        
+        <RatingBar 
+            android:id="@+id/ratingBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:numStars="5"
+            android:isIndicator="true"
+            style="@style/RatingBar" />
+
+    </LinearLayout>	
+	
+</RelativeLayout>
