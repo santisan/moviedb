@@ -2,7 +2,7 @@
 
     <style name="AppTheme" parent="android:Theme.Light" />
     
-    <style name="RatingBarSmall">
+    <style name="RatingBarSmall" parent="@style/AppTheme">
         <item name="android:indeterminateOnly">false</item>
         <item name="android:progressDrawable">@*android:drawable/ratingbar_small</item>
         <item name="android:indeterminateDrawable">@*android:drawable/ratingbar_small</item>
@@ -13,5 +13,10 @@
     </style>
     
     <style name="RatingBar" parent="@style/RatingBarSmall" />
+    
+    <style name="MovieGrid" parent="@style/AppTheme">
+        <item name="android:drawSelectorOnTop">true</item>
+        <item name="android:listSelector">@drawable/photogrid_list_selector</item>
+    </style>
     
 </resources>

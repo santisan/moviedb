@@ -10,5 +10,14 @@
     <string name="release_date">Release date: %1$s</string>
     <string name="runtime">Duration: %1$s minutes</string>
     <string name="votes">%1$s votes</string>
+    <string name="now_playing">Now playing</string>
+    <string name="upcoming">Upcoming</string>
+    <string name="popular">Popular</string>
+    <string name="top_rated">Top rated</string>
+    <string name="watchlist">Watchlist</string>
+    <string name="trailer_unavailable">Sorry, the trailer for this movie is unavailable</string>
+    <string name="log_in">Log in</string>
+    <string name="getAuthTokenError">Operation failed: please try again later</string>
+    <string name="movies">Movies</string>
 
 </resources>

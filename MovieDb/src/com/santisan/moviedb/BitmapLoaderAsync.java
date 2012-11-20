@@ -36,14 +36,34 @@ public class BitmapLoaderAsync extends BitmapLoader
         super();
     }
     
+    public BitmapLoaderAsync(boolean usePlaceholderBitmap) {
+        super(usePlaceholderBitmap);
+    }
+
     @Override
     public void LoadBitmapAsync(String imagePath, ImageView imageView) {
         LoadBitmapAsync(imagePath, imageView, null);
     }
     
     @Override
+    public void LoadBitmapAsync(String imagePath, ImageView imageView, int width, int height) {
+        LoadBitmapAsync(imagePath, imageView, width, height, null);
+    }
+    
+    @Override
     public void LoadBitmapAsync(String imagePath, ImageView imageView, ILoadBitmapListener listener)
     {
+        LoadBitmapAsync(imagePath, imageView, imageView.getLayoutParams().width, 
+                imageView.getLayoutParams().height, listener);
+    }
+    
+    @Override
+    public void LoadBitmapAsync(String imagePath, ImageView imageView, int width, int height, 
+            ILoadBitmapListener listener)
+    {
+        this.imageWidth = width;
+        this.imageHeight = height;
+        
         if (!CancelPotentialWork(imagePath, imageView))
         {
             if (listener != null) 
@@ -56,9 +76,6 @@ public class BitmapLoaderAsync extends BitmapLoader
             }
             return;
         }
-        
-        this.imageWidth = imageView.getLayoutParams().width;
-        this.imageHeight = imageView.getLayoutParams().height;
         
         if (imageCache != null) 
         {            

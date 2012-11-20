@@ -4,10 +4,14 @@
 package com.santisan.moviedb;
 
 import android.app.Application;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.santisan.moviedb.ImageCache.ImageCacheParams;
+import com.santisan.moviedb.MovieDbClient.MovieDbResultListener;
 import com.santisan.moviedb.model.Config;
 import com.santisan.moviedb.model.PagedMovieSet;
+import com.santisan.moviedb.ui.MainActivity;
 
 public class MovieDbApp extends Application
 {
@@ -15,11 +19,14 @@ public class MovieDbApp extends Application
     
     private static Config.ImageConfig imageConfig;
     private static PagedMovieSet pagedMovieSet;
+    private static UserUtils userUtils;
     
     @Override
     public void onCreate() 
     {
         super.onCreate();
+        
+        loadConfig();
         
         ImageCacheParams cacheParams = new ImageCacheParams(this, IMAGE_CACHE_DIR);
         cacheParams.setMemCacheSizePercent(this, 0.125f);
@@ -27,8 +34,28 @@ public class MovieDbApp extends Application
         
         BitmapLoader.SetResources(getResources());
         BitmapLoader.AddImageCache(cacheParams);
+        
+        userUtils = new UserUtils(this);
     }
     
+    private void loadConfig() 
+    {
+        MovieDbClient client = new MovieDbClient();
+        client.getConfig(new MovieDbResultListener<Config>() {            
+            @Override
+            public void onResult(Config result) 
+            {
+                if (result == null) {
+                    //Toast.makeText(MovieDbApp.this, "web service unavailable, try again later", 
+                    //        Toast.LENGTH_LONG).show();
+                    Log.e("getConfig", "web service unavailable");
+                    return;
+                }
+                MovieDbApp.setImageConfig(result.getImageConfig());
+            }
+        });
+    }
+
     @Override
     public void onLowMemory() {
         BitmapLoader.ClearMemCache();
@@ -49,5 +76,13 @@ public class MovieDbApp extends Application
     
     public static void setPagedMovieSet(PagedMovieSet pagedMovieSet) {
         MovieDbApp.pagedMovieSet = pagedMovieSet;
+    }
+    
+    public static UserUtils getUserUtils() {
+        return userUtils;
+    }
+    
+    public static void setUserUtils(UserUtils userUtils) {
+        MovieDbApp.userUtils = userUtils;
     }
 }

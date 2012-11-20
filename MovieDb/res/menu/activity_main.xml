@@ -1,6 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_settings"
-        android:title="@string/menu_settings"
+    <item android:id="@+id/log_in"
+        android:title="@string/log_in"
         android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:showAsAction="ifRoom" />
+    <item android:id="@+id/movies" android:title="@string/movies" android:showAsAction="ifRoom" android:orderInCategory="1"></item>
 </menu>

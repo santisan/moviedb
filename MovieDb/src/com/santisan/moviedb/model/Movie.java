@@ -25,6 +25,7 @@ public class Movie
     @SerializedName("overview")         private String overview = "";
     @SerializedName("runtime")          private int runtime;
     @SerializedName("trailers")         private TrailerList trailers;
+    @SerializedName("casts")            private Casts casts;
     
     public Movie()
     {
@@ -116,6 +117,14 @@ public class Movie
     
     public void setTrailers(TrailerList trailers) {
         this.trailers = trailers;
+    }
+    
+    public Casts getCasts() {
+        return casts;
+    }
+    
+    public void setCasts(Casts casts) {
+        this.casts = casts;
     }
     
     public String getYoutubeTrailer()

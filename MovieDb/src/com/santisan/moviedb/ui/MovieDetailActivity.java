@@ -18,6 +18,7 @@ import com.actionbarsherlock.view.Window;
 import com.santisan.moviedb.MovieDbApp;
 import com.santisan.moviedb.MovieDbClient;
 import com.santisan.moviedb.MovieDbClient.MovieDbResultListener;
+import com.santisan.moviedb.MovieDbClient.MovieListType;
 import com.santisan.moviedb.R;
 import com.santisan.moviedb.model.PagedMovieSet;
 
@@ -26,12 +27,15 @@ import com.santisan.moviedb.model.PagedMovieSet;
 public class MovieDetailActivity extends SherlockFragmentActivity
 {    
     private static final String TAG = "MovieDetailActivity";
-
     public static final String EXTRA_MOVIE_POSITION = "extraMoviePosition";
+    public static final String EXTRA_MOVIE_LIST_TYPE = "extraMovieListType";
+    public static final String EXTRA_REQUIRE_SESSION = "extraRequireSession";
 
-    private MoviePagerAdapter mAdapter;
-    private ViewPager mPager;
+    private MoviePagerAdapter adapter;
+    private ViewPager pager;
     private PagedMovieSet movieSet;
+    private boolean requireSession;
+    private MovieListType movieListType;    
 
     @Override
     public void onCreate(Bundle savedInstanceState) 
@@ -43,20 +47,28 @@ public class MovieDetailActivity extends SherlockFragmentActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         
         movieSet = MovieDbApp.getPagedMovieSet();
+        
+        String type = getIntent().getStringExtra(EXTRA_MOVIE_LIST_TYPE);
+        requireSession = getIntent().getBooleanExtra(EXTRA_REQUIRE_SESSION, false);
+        if (type == null) 
+            movieListType = MovieListType.Popular;
+        else 
+            movieListType = MovieListType.valueOf(type);
+        
         SetupViewPager();
     }   
     
     private void SetupViewPager()
     {      
-        mAdapter = new MoviePagerAdapter(getSupportFragmentManager());        
-        mPager = (ViewPager)findViewById(R.id.pager);
-        mPager.setAdapter(mAdapter);
-        mPager.setPageMargin((int)getResources().getDimension(R.dimen.image_detail_pager_margin));
-        mPager.setOffscreenPageLimit(2);       
+        adapter = new MoviePagerAdapter(getSupportFragmentManager());        
+        pager = (ViewPager)findViewById(R.id.pager);
+        pager.setAdapter(adapter);
+        pager.setPageMargin((int)getResources().getDimension(R.dimen.image_detail_pager_margin));
+        pager.setOffscreenPageLimit(2);       
             
         final int currentItem = getIntent().getIntExtra(EXTRA_MOVIE_POSITION, -1);
         if (currentItem != -1) {
-            mPager.setCurrentItem(currentItem);
+            pager.setCurrentItem(currentItem);
         }
     } 
 
@@ -64,7 +76,7 @@ public class MovieDetailActivity extends SherlockFragmentActivity
     public void onResume() 
     {
         super.onResume();        
-        mAdapter.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
     }  
     
     @Override
@@ -107,7 +119,8 @@ public class MovieDetailActivity extends SherlockFragmentActivity
             if (movieSet.getPage() < movieSet.getTotalPages() && position + 3 >= movieSet.getMovies().size())
             {               
                 MovieDbClient client = new MovieDbClient();
-                client.getNowPlaying(movieSet.getPage() + 1, new MovieDbResultListener<PagedMovieSet>() 
+                client.getMovieList(movieListType, movieSet.getPage() + 1, requireSession,
+                        new MovieDbResultListener<PagedMovieSet>() 
                 {               
                     @Override
                     public void onResult(PagedMovieSet result) 

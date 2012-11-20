@@ -5,8 +5,6 @@ package com.santisan.moviedb;
 
 import java.io.File;
 
-import com.santisan.moviedb.ImageCache.ImageCacheParams;
-
 import android.annotation.TargetApi;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -15,6 +13,8 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
+
+import com.santisan.moviedb.ImageCache.ImageCacheParams;
 
 public abstract class BitmapLoader
 {
@@ -34,11 +34,15 @@ public abstract class BitmapLoader
     private static final int MESSAGE_CLEAR = 0;
     private static final int MESSAGE_INIT_DISK_CACHE = 1;
     private static final int MESSAGE_FLUSH = 2;
-    private static final int MESSAGE_CLOSE = 3;    
+    private static final int MESSAGE_CLOSE = 3;
     
-    protected BitmapLoader() 
-    {
-        if (placeHolderBitmap == null) 
+    protected BitmapLoader() {
+        this(true);
+    }
+    
+    protected BitmapLoader(boolean usePlaceholderBitmap) 
+    {        
+        if (usePlaceholderBitmap  && placeHolderBitmap == null) 
         {
             new AsyncTask<Void, Void, Void>() {
                 @Override
@@ -100,6 +104,11 @@ public abstract class BitmapLoader
     public abstract void LoadBitmapAsync(String imagePath, ImageView imageView, ILoadBitmapListener listener);
     
     public abstract void LoadBitmapAsync(String imagePath, int width, int height, ILoadBitmapListener listener);
+    
+    public abstract void LoadBitmapAsync(String imagePath, ImageView imageView, int width, int height);
+    
+    public abstract void LoadBitmapAsync(String imagePath, ImageView imageView, int width, int height,
+            ILoadBitmapListener listener);
     
     public abstract void CancelTask(ImageView imageView);
     
@@ -248,5 +257,5 @@ public abstract class BitmapLoader
 
     public static void CloseDiskCache() {
         new CacheAsyncTask().execute(MESSAGE_CLOSE);
-    }
+    }    
 }

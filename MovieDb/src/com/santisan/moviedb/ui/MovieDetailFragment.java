@@ -19,24 +19,25 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.santisan.moviedb.BitmapLoader;
 import com.santisan.moviedb.BitmapLoaderAsync;
+import com.santisan.moviedb.MovieDbApp;
 import com.santisan.moviedb.MovieDbClient;
 import com.santisan.moviedb.MovieDbClient.MovieDbResultListener;
 import com.santisan.moviedb.R;
+import com.santisan.moviedb.Utils;
+import com.santisan.moviedb.model.Casts;
 import com.santisan.moviedb.model.Movie;
 import com.santisan.moviedb.model.Movie.PosterSize;
 
 public class MovieDetailFragment extends SherlockFragment
 {    
     private static final String MOVIE_ID = "movieId";
-
     public static final String TAG = "MovieDetailFragment";
-
     private static final String YOUTUBE_URL = "http://m.youtube.com/watch?v="; //"http://youtu.be/";
-
     private static final String POSITION = "position";
     
     private TextView titleTextView;
@@ -91,22 +92,13 @@ public class MovieDetailFragment extends SherlockFragment
         if (position == 0)
             Log.e(TAG, "Couldn't get the position from arguments nor from savedInstanceState");
             
-        if (movieId != -1)
-            setMovie(movieId);
+        if (movieId != 0)
+            setMovie(movieId, position);
     }
     
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup arg1, Bundle arg2) 
-    {
-        /*if (movieId == -1) 
-        {
-            ProgressBar progressBar = new ProgressBar(getSherlockActivity());
-            progressBar.setIndeterminate(true);
-            LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-            progressBar.setLayoutParams(params);           
-            return progressBar;
-        }*/
-        
+    {       
         View v = inflater.inflate(R.layout.movie_detail, null);
         titleTextView = (TextView)v.findViewById(R.id.title);
         posterImageView = (ImageView)v.findViewById(R.id.poster);
@@ -131,20 +123,26 @@ public class MovieDetailFragment extends SherlockFragment
         outState.putInt(POSITION, position);
     }
     
-    private void setMovie(final int movieId)
+    private void setMovie(final int movieId, final int position)
     {     
         MovieDbClient client = new MovieDbClient();
-        client.getMovie(movieId, new MovieDbResultListener<Movie>() {
+        client.getMovieWithTrailers(movieId, new MovieDbResultListener<Movie>() {
             @Override
             public void onResult(Movie result)
-            {
+            {            
                 if (result == null) {
                     Log.e(TAG, "movie null for id " + movieId);
                     return;
                 }
+                if (!MovieDetailFragment.this.isAdded()) {
+                    Log.e(TAG, "fragment is not added");
+                    return;
+                }
                 
                 movie = result;
-                
+                Casts casts = MovieDbApp.getPagedMovieSet().getMovies().get(position).getCasts();
+                movie.setCasts(casts);
+            
                 imageLoader.LoadBitmapAsync(movie.getPosterUrl(getPosterSize()), posterImageView);                
                 titleTextView.setText(movie.getTitle());
                 overviewTextView.setText(movie.getOverview());
@@ -156,9 +154,17 @@ public class MovieDetailFragment extends SherlockFragment
                     @Override
                     public void onClick(View v) 
                     {
-                        String url = YOUTUBE_URL + movie.getYoutubeTrailer() + "&hd=1";
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        startActivity(intent);
+                        if (Utils.isNullOrWhitespace(movie.getYoutubeTrailer())) 
+                        {
+                            Toast.makeText(getSherlockActivity(), R.string.trailer_unavailable, 
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                        else {
+                            String url = YOUTUBE_URL + movie.getYoutubeTrailer() + "&hd=1";
+                            Log.d(TAG, "trailer URL: " + url);
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                            startActivity(intent);
+                        }
                     }
                 });
                 
