@@ -62,7 +62,7 @@ public class MovieDetailActivity extends SherlockFragmentActivity
         adapter = new MoviePagerAdapter(getSupportFragmentManager());        
         pager = (ViewPager)findViewById(R.id.pager);
         pager.setAdapter(adapter);
-        //pager.setPageMargin((int)getResources().getDimension(R.dimen.image_detail_pager_margin));
+        pager.setPageMargin((int)getResources().getDimension(R.dimen.image_detail_pager_margin));
         pager.setOffscreenPageLimit(2);
         pager.setAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
             

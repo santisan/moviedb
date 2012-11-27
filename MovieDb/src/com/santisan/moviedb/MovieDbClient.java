@@ -130,8 +130,8 @@ public class MovieDbClient
         getMovie(id, new String[] { "casts" }, listener);
     }
     
-    public void getMovieWithTrailers(int id, MovieDbResultListener<Movie> listener) {
-        getMovie(id, new String[] { "trailers" }, listener);
+    public void getMovieFull(int id, MovieDbResultListener<Movie> listener) {
+        getMovie(id, new String[] { "trailers", "images" }, listener);
     }
     
     private void getMovie(final int id, String[] extraQueries, final MovieDbResultListener<Movie> listener)
@@ -326,8 +326,8 @@ public class MovieDbClient
             }
             
             request.addHeader("Accept", acceptType);
-            request.setHeader("Content-Type", contentType);
-                    
+            request.setHeader("Content-Type", contentType);           
+            
             HttpResponse response = httpClient.execute(request);            
             final int statusCode = response.getStatusLine().getStatusCode();
             

@@ -3,6 +3,8 @@
  */
 package com.santisan.moviedb.ui;
 
+import java.util.List;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,6 +12,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -17,9 +20,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
+import android.view.ViewGroup.MarginLayoutParams;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,8 +40,9 @@ import com.santisan.moviedb.MovieDbClient.MovieListType;
 import com.santisan.moviedb.R;
 import com.santisan.moviedb.Utils;
 import com.santisan.moviedb.model.Casts;
+import com.santisan.moviedb.model.Image;
 import com.santisan.moviedb.model.Movie;
-import com.santisan.moviedb.model.Movie.PosterSize;
+import com.santisan.moviedb.model.Movie.ImageSize;
 import com.santisan.moviedb.model.PostResponse;
 import com.santisan.moviedb.model.WatchlistMovie;
 
@@ -47,6 +55,8 @@ public class MovieDetailFragment extends SherlockFragment
     private static final String MOVIE_LIST_TYPE = "movieListType";
     private static final String MOVIE = "movie";
     
+    private static final int NUM_IMAGES_GALLERY = 4;
+    
     private TextView titleTextView;
     private ImageView posterImageView;
     private TextView overviewTextView;
@@ -56,6 +66,7 @@ public class MovieDetailFragment extends SherlockFragment
     //private RatingBar ratingBar;
     private Button trailerButton;
     private Button watchlistButton;
+    private LinearLayout galleryLayout;
     
     private int movieId = 0;
     private int position;
@@ -123,11 +134,13 @@ public class MovieDetailFragment extends SherlockFragment
         posterImageView = (ImageView)v.findViewById(R.id.poster);
         trailerButton = (Button)v.findViewById(R.id.trailerBtn);
         overviewTextView = (TextView)v.findViewById(R.id.overview);
+        overviewTextView.setMovementMethod(new ScrollingMovementMethod());
         runtimeTextView = (TextView)v.findViewById(R.id.runtime);
         votesTextView = (TextView)v.findViewById(R.id.votes);
         castTextView = (TextView)v.findViewById(R.id.cast);
         //ratingBar = (RatingBar)v.findViewById(R.id.ratingBar);
         watchlistButton = (Button)v.findViewById(R.id.watchlistBtn);
+        galleryLayout = (LinearLayout)v.findViewById(R.id.gallery);
         return v;
     }
     
@@ -154,10 +167,10 @@ public class MovieDetailFragment extends SherlockFragment
         }
         
         MovieDbClient client = new MovieDbClient();
-        client.getMovieWithTrailers(movieId, new MovieDbResultListener<Movie>() {
+        client.getMovieFull(movieId, new MovieDbResultListener<Movie>() {
             @Override
             public void onResult(Movie result)
-            {            
+            {
                 if (result == null) {
                     Log.e(TAG, "movie null for id " + movieId);
                     return;
@@ -179,14 +192,15 @@ public class MovieDetailFragment extends SherlockFragment
     
     private void setMovieData()
     {
-        final String posterUrl = movie.getPosterUrl(getPosterSize());
-        imageLoader.LoadBitmapAsync(posterUrl, posterImageView);
+        imageLoader.LoadBitmapAsync(movie.getPosterUrl(getPosterSize()), posterImageView);
         String year = movie.getReleaseDate().substring(0, 4);
         titleTextView.setText(movie.getTitle() + " (" + year + ")");
         overviewTextView.setText(movie.getOverview());
         runtimeTextView.setText(getString(R.string.runtime, movie.getRuntime()));
         votesTextView.setText(getString(R.string.votes, movie.getVoteAverage(), movie.getVoteCount()));
-        castTextView.setText(movie.getCasts().getCastShortString());
+        if (movie.getCasts() != null) {
+            castTextView.setText(movie.getCasts().getCastShortString());
+        }
         //ratingBar.setRating(movie.getVoteAverage() * 0.5f);
         trailerButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -209,12 +223,34 @@ public class MovieDetailFragment extends SherlockFragment
             public void onClick(View v) 
             {
                 Intent intent = new Intent(getSherlockActivity(), ImageActivity.class);
-                intent.putExtra(ImageActivity.IMAGE_URL_EXTRA, posterUrl);
+                intent.putExtra(ImageActivity.IMAGE_URL_EXTRA, movie.getPosterUrl(getPosterSizeBig()));
                 getSherlockActivity().startActivity(intent);
             }
         });
+        
+        setGalleryData();
     }
     
+    private void setGalleryData() 
+    {
+        int imageWidth = (int)(displayMetrics.widthPixels * 1.5f) / NUM_IMAGES_GALLERY;
+        int imageHeight = (int)(imageWidth * 0.5625f);
+        
+        List<Image> images = movie.getImages().getAll();
+        int numImages = Math.min(images.size(), NUM_IMAGES_GALLERY);
+        Log.d(TAG, "num images gallery: " + numImages);
+        for (int i=0; i < numImages; i++)
+        {
+            ImageView image = new ImageView(getSherlockActivity());
+            MarginLayoutParams params = new MarginLayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            params.rightMargin = 8;
+            image.setLayoutParams(new LinearLayout.LayoutParams(params));
+            image.setScaleType(ScaleType.FIT_XY);
+            imageLoader.LoadBitmapAsync(images.get(i).getUrl(getGallerySize()), image, imageWidth, imageHeight);
+            galleryLayout.addView(image);
+        }
+    }
+
     private void addOrRemoveFromWatchlist() 
     {
         if (!MovieDbApp.getUserUtils().hasSession()) 
@@ -281,16 +317,38 @@ public class MovieDetailFragment extends SherlockFragment
         }
     }
     
-    private PosterSize getPosterSize()
+    private ImageSize getPosterSize()
     {
-        PosterSize posterSize = PosterSize.w342;
+        ImageSize posterSize = ImageSize.w342;
         if (displayMetrics.widthPixels <= 600)
-            posterSize = PosterSize.w185;
+            posterSize = ImageSize.w92;
         else if (displayMetrics.widthPixels >= 800)
-            posterSize = PosterSize.w500;
+            posterSize = ImageSize.w500;
             
         Log.d(TAG, "posterSize: " + posterSize.name());
         return posterSize;
+    }
+    
+    private ImageSize getPosterSizeBig()
+    {
+        ImageSize posterSize = ImageSize.w342;
+        if (displayMetrics.widthPixels >= 700)
+            posterSize = ImageSize.w500;
+            
+        Log.d(TAG, "posterSizeBig: " + posterSize.name());
+        return posterSize;
+    }
+    
+    private ImageSize getGallerySize()
+    {
+        ImageSize size = ImageSize.w92;
+        if (displayMetrics.widthPixels >= 600)
+            size = ImageSize.w185;
+        else if (displayMetrics.widthPixels >= 360)
+            size = ImageSize.w154;
+            
+        Log.d(TAG, "gallerySize: " + size.name());
+        return size;
     }
     
     @Override

@@ -3,6 +3,7 @@
  */
 package com.santisan.moviedb.model;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -11,7 +12,7 @@ public class Casts
 {
     private final static int NUM_ACTORS_FOR_SHORT_STRING = 3;
     
-    private List<Actor> cast;
+    private List<Actor> cast = new ArrayList<Actor>();
     //private List<Crew> crew;
     
     public Casts()

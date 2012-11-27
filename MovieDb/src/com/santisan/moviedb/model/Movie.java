@@ -13,9 +13,8 @@ import com.santisan.moviedb.model.TrailerList.YoutubeTrailer;
 
 public class Movie extends Entity
 {
-    public enum PosterSize { w92, w154, w185, w342, w500, original }
-    
-    public enum BackdropSize { w300, w780, w1280, original }
+    public enum ImageSize { w92, w154, w185, w300, w342, w500, w780, w1280, original }
+    //public enum ImageSize { w300, w780, w1280, original }    
     
     @SerializedName("backdrop_path")    private String backdropPath;
     @SerializedName("id")               private int id;
@@ -29,6 +28,7 @@ public class Movie extends Entity
     @SerializedName("runtime")          private int runtime;
     @SerializedName("trailers")         private TrailerList trailers;
     @SerializedName("casts")            private Casts casts;
+    @SerializedName("images")           private ImageList images;
     private boolean inWatchlist = false;
     
     public Movie()
@@ -51,6 +51,9 @@ public class Movie extends Entity
         in.readTypedList(trailers.getYoutubeTrailers(), YoutubeTrailer.CREATOR);
         casts = new Casts();
         in.readTypedList(casts.getCast(), Actor.CREATOR);
+        images = new ImageList();
+        in.readTypedList(images.getBackdrops(), Image.CREATOR);
+        in.readTypedList(images.getPosters(), Image.CREATOR);
         inWatchlist = (in.readInt() == 1);
     }
 
@@ -69,6 +72,8 @@ public class Movie extends Entity
         dest.writeInt(runtime);
         dest.writeTypedList(trailers.getYoutubeTrailers());
         dest.writeTypedList(casts.getCast());
+        dest.writeTypedList(images.getBackdrops());
+        dest.writeTypedList(images.getPosters());
         dest.writeInt(inWatchlist ? 1 : 0);
     }
     
@@ -176,6 +181,14 @@ public class Movie extends Entity
         this.inWatchlist = inWatchlist;
     }
     
+    public ImageList getImages() {
+        return images;
+    }
+    
+    public void setImages(ImageList images) {
+        this.images = images;
+    }
+    
     public String getYoutubeTrailer()
     {
         String defaultSource = "";
@@ -189,13 +202,13 @@ public class Movie extends Entity
         return defaultSource;
     }
     
-    public String getPosterUrl(PosterSize size)
+    public String getPosterUrl(ImageSize size)
     {
         if (Utils.isNullOrWhitespace(posterPath)) return "";
         return MovieDbApp.getImageConfig().getBaseUrl() + size.name() + posterPath;
     }
 
-    public String getBackdropUrl(BackdropSize size) 
+    public String getBackdropUrl(ImageSize size) 
     {
         if (Utils.isNullOrWhitespace(backdropPath)) return "";
         return MovieDbApp.getImageConfig().getBaseUrl() + size.name() + backdropPath;

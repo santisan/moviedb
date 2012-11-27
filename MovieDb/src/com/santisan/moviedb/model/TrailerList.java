@@ -3,6 +3,7 @@
  */
 package com.santisan.moviedb.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.os.Parcel;
@@ -12,7 +13,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class TrailerList
 {
-    @SerializedName("youtube") private List<YoutubeTrailer> youtubeTrailers;
+    @SerializedName("youtube") private List<YoutubeTrailer> youtubeTrailers = new ArrayList<YoutubeTrailer>();
 
     public TrailerList()
     {

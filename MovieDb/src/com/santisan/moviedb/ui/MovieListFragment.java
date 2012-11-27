@@ -16,7 +16,6 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.WindowManager;
 import android.widget.AbsListView;
-import android.widget.AbsListView.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -26,6 +25,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.ActionBar.LayoutParams;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.santisan.moviedb.BitmapLoader;
 import com.santisan.moviedb.BitmapLoaderAsync;
@@ -36,7 +36,7 @@ import com.santisan.moviedb.MovieDbClient.MovieListType;
 import com.santisan.moviedb.R;
 import com.santisan.moviedb.Utils;
 import com.santisan.moviedb.model.Movie;
-import com.santisan.moviedb.model.Movie.BackdropSize;
+import com.santisan.moviedb.model.Movie.ImageSize;
 import com.santisan.moviedb.model.PagedMovieSet;
 
 public class MovieListFragment extends SherlockFragment implements OnItemClickListener, OnGlobalLayoutListener
@@ -106,6 +106,14 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle args) 
     {
+        if (requireSession && !MovieDbApp.getUserUtils().isLoggedIn()) 
+        {
+            TextView text = new TextView(getSherlockActivity());
+            text.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            text.setText(R.string.require_session);
+            return text;
+        }
+        
         View v = inflater.inflate(R.layout.movie_list, null);
         gridView = (GridView)v.findViewById(R.id.gridView);
         gridView.setAdapter(adapter);
@@ -128,6 +136,9 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     public void onActivityCreated(Bundle args) 
     {
         super.onActivityCreated(args);
+        
+        if (requireSession && !MovieDbApp.getUserUtils().isLoggedIn()) 
+            return;
         
         pagedMovieSet = MovieDbApp.getPagedMovieSet(movieListType);
         if (pagedMovieSet != null) {
@@ -299,7 +310,7 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
             Movie movie = (Movie)getItem(position);
             if (movie != null)
             {         
-                String url = movie.getBackdropUrl(BackdropSize.w1280);
+                String url = movie.getBackdropUrl(ImageSize.w1280);
                 if (!Utils.isNullOrWhitespace(url)) {
                     imageLoader.LoadBitmapAsync(url, viewHolder.background, Math.min(displayMetrics.widthPixels, 1280) / 4, 
                             (int)getResources().getDimension(R.dimen.list_item_background_height));
