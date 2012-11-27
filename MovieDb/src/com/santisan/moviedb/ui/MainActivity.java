@@ -3,10 +3,12 @@
  */
 package com.santisan.moviedb.ui;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.Tab;
@@ -15,9 +17,9 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.santisan.moviedb.MovieDbApp;
 import com.santisan.moviedb.MovieDbClient.MovieListType;
-import com.santisan.moviedb.UserUtils.UserLoginListener;
 import com.santisan.moviedb.R;
 import com.santisan.moviedb.UserUtils;
+import com.santisan.moviedb.UserUtils.UserLoginListener;
 import com.santisan.moviedb.model.AuthToken;
 
 public class MainActivity extends SherlockFragmentActivity
@@ -28,6 +30,7 @@ public class MainActivity extends SherlockFragmentActivity
     
     private UserUtils userUtils;
     private Menu menu;
+    private ProgressDialog progressDialog;
     
     @Override
     public void onCreate(Bundle savedInstanceState) 
@@ -41,11 +44,10 @@ public class MainActivity extends SherlockFragmentActivity
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         
         if (savedInstanceState != null) {
-            actionBar.setSelectedNavigationItem(savedInstanceState.getInt(SELECTED_TAB_INDEX));
             userUtils.setAuthToken((AuthToken)savedInstanceState.getParcelable(AUTH_TOKEN)); 
             Log.d(TAG, "onCreate: restoring instance state");
         }
-        userUtils.getNewSession(loginListener);
+        getNewSession();
         
         Tab tab = actionBar.newTab().setText(getString(R.string.now_playing)).
                 setTabListener(new TabListener(MovieListFragment.newInstance(MovieListType.NowPlaying)));
@@ -66,9 +68,25 @@ public class MainActivity extends SherlockFragmentActivity
         tab = actionBar.newTab().setText(getString(R.string.watchlist)).
                 setTabListener(new TabListener(MovieListFragment.newInstance(MovieListType.Watchlist, true)));
         actionBar.addTab(tab);
+        
+        if (savedInstanceState != null)
+            actionBar.setSelectedNavigationItem(savedInstanceState.getInt(SELECTED_TAB_INDEX));
     }
     
-    @Override
+    private void getNewSession()
+    {        
+        if (progressDialog == null) {
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setCancelable(false);
+            progressDialog.setTitle(R.string.login_in_progress);
+            progressDialog.setMessage(getString(R.string.please_wait));
+        }
+        progressDialog.show();
+        
+        userUtils.getNewSession(loginListener);
+    }
+    
+    /*@Override
     protected void onRestart() {
         super.onRestart();
         userUtils.getNewSession(loginListener);
@@ -78,7 +96,7 @@ public class MainActivity extends SherlockFragmentActivity
     protected void onResume() {
         super.onResume();
         userUtils.getNewSession(loginListener);
-    }
+    }*/
 
     @Override
     protected void onSaveInstanceState(Bundle state) 
@@ -93,13 +111,14 @@ public class MainActivity extends SherlockFragmentActivity
     public boolean onCreateOptionsMenu(Menu menu) 
     {
         this.menu = menu;
-        getSupportMenuInflater().inflate(R.menu.activity_main, menu);       
+        getSupportMenuInflater().inflate(R.menu.activity_main, menu);
+        updateLoginMenuItems();
         return true;
     }
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) 
-    {        
+    {
         if (item.getItemId() == R.id.log_in) 
         {
             userUtils.requestAuthToken(this);
@@ -118,19 +137,36 @@ public class MainActivity extends SherlockFragmentActivity
         @Override
         public void onUserLoggedIn() {
             updateLoginMenuItems();
+            if (progressDialog != null && progressDialog.isShowing())
+                progressDialog.dismiss();
+        }
+
+        @Override
+        public void onError() {
+            Toast.makeText(MainActivity.this, R.string.operation_failed, Toast.LENGTH_SHORT).show();
+            if (progressDialog != null && progressDialog.isShowing())
+                progressDialog.dismiss();
         }
     };
     
     private void updateLoginMenuItems()
     {
-        MenuItem item;
-        if (userUtils.isLoggedIn()) 
-            item = menu.findItem(R.id.log_in);
-        else 
-            item = menu.findItem(R.id.log_out);
+        if (menu == null) return;
         
-        item.setVisible(false);
-        item.setEnabled(false);
+        MenuItem itemToHide;
+        MenuItem itemToShow;
+        if (userUtils.isLoggedIn()) { 
+            itemToHide = menu.findItem(R.id.log_in);
+            itemToShow = menu.findItem(R.id.log_out);
+        }
+        else { 
+            itemToHide = menu.findItem(R.id.log_out);
+            itemToShow = menu.findItem(R.id.log_in);
+        }
+        itemToHide.setVisible(false);
+        itemToHide.setEnabled(false);
+        itemToShow.setVisible(true);
+        itemToShow.setEnabled(true);
     }
     
     private static class TabListener implements ActionBar.TabListener
@@ -140,13 +176,13 @@ public class MainActivity extends SherlockFragmentActivity
         
         public TabListener(Fragment fragment) {
             this.fragment = fragment;
-        }       
+        }
 
         @Override
         public void onTabSelected(Tab tab, FragmentTransaction ft) 
         {
             ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
-            
+                        
             if (isFragmentAdded) {
                 ft.attach(fragment);
             }

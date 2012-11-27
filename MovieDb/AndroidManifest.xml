@@ -21,7 +21,8 @@
         
         <activity
             android:name=".ui.MainActivity"
-            android:label="@string/title_activity_main" >
+            android:label="@string/title_activity_main"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -30,7 +31,13 @@
         </activity>
         <activity 
             android:name=".ui.MovieDetailActivity" 
-            android:label="@string/title_activity_main" />        
+            android:label="@string/title_activity_main"
+            android:screenOrientation="portrait" />   
+        <activity
+            android:name=".ui.ImageActivity" 
+            android:label="@string/title_activity_main"
+            android:theme="@style/Theme.MovieDb.ActionBarOverlay"
+            android:screenOrientation="portrait" />       
     </application>
 
 </manifest>

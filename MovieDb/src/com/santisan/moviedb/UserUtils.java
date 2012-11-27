@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.widget.Toast;
 
 import com.santisan.moviedb.MovieDbClient.MovieDbResultListener;
@@ -23,25 +24,25 @@ public class UserUtils
 {
     public interface UserLoginListener {
         void onUserLoggedIn();
+        void onError();
     }
     
     protected static final String TAG = "UserUtils";
     private static final String KEY_SESSION_ID = "keySessionId";
-    private Context context;
     private Session session;
     private AuthToken authToken;
     private Account account;
+    private SparseIntArray watchlist = new SparseIntArray();
     private SharedPreferences sharedPreferences;
     private MovieDbClient client = new MovieDbClient();
     
-    public UserUtils(Context ctx)
+    public UserUtils(Context context)
     {
-        context = ctx;
         sharedPreferences = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
-        String sessionId = sharedPreferences.getString(KEY_SESSION_ID, null);
-        Log.d(TAG, "loaded sessionId from sharedPreferences: " + sessionId);
+        String sessionId = sharedPreferences.getString(KEY_SESSION_ID, null);        
         if (!Utils.isNullOrWhitespace(sessionId)) {
             session = new Session(sessionId);
+            Log.d(TAG, "loaded sessionId from sharedPreferences: " + sessionId);
         }
     }
     
@@ -87,7 +88,7 @@ public class UserUtils
             {
                 if (result == null || Utils.isNullOrWhitespace(result.getAuthCallback()) || !result.isSuccessful()) {
                     Log.e(TAG, "getAuthToken failed");
-                    Toast.makeText(context, R.string.operation_failed, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, R.string.operation_failed, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 
@@ -105,6 +106,10 @@ public class UserUtils
         {
             if (!hasAccount()) {
                 requestAccountData(listener);
+            } 
+            else {
+                Log.d(TAG, "getNewSession: user was already logged in");
+                listener.onUserLoggedIn();
             }
             return;
         }
@@ -117,7 +122,7 @@ public class UserUtils
             {
                 if (result == null || Utils.isNullOrWhitespace(result.getSessionId()) || !result.isSuccessful()) {
                     Log.e(TAG, "getSession failed");
-                    Toast.makeText(context, R.string.operation_failed, Toast.LENGTH_SHORT).show();
+                    listener.onError();
                     return;
                 }                
                 Log.d(TAG, "SessionId: " + result.getSessionId());
@@ -130,49 +135,61 @@ public class UserUtils
     }
     
     public void requestAccountData(final UserLoginListener listener)
-    {
-        client.getAccount(new MovieDbResultListener<Account>() {                    
+    {        
+        client.getAccount(new MovieDbResultListener<Account>() {
             @Override
             public void onResult(Account result) 
             {
                 if (result == null) {
                     Log.e(TAG, "getAccount result null");
-                    Toast.makeText(context, R.string.operation_failed, Toast.LENGTH_SHORT).show();
+                    listener.onError();
                     return;
                 }
+                
                 Log.d(TAG, "AccountId: " + result.getId());
                 account = result;
-                listener.onUserLoggedIn();
+                getWatchlist(1, listener);                
             }
-        });
-        
-        getWatchlist(1);
+        });       
     }
     
-    public void getWatchlist(int page)
+    private void getWatchlist(int page, final UserLoginListener listener)
     {
         client.getMovieList(MovieListType.Watchlist, page, true, new MovieDbResultListener<PagedMovieSet>() {            
             @Override
-            public void onResult(PagedMovieSet result) 
+            public void onResult(PagedMovieSet result)
             {
                 if (result == null || result.getMovies() == null) {
                     Log.e(TAG, "getWatchlist failed");
+                    listener.onUserLoggedIn();
                     return;
                 }
                 
-                for (Movie movie : result.getMovies()) {
-                    account.getWatchlist().put(movie.getId(), movie.getId());
-                }
+                for (Movie movie : result.getMovies())
+                    watchlist.put(movie.getId(), movie.getId());
                 
-                if (result.getPage() < result.getTotalPages()) {
-                    getWatchlist(result.getPage() + 1);
-                }
+                if (result.getPage() < result.getTotalPages())
+                    getWatchlist(result.getPage() + 1, listener);                
+                else 
+                    listener.onUserLoggedIn();
             }
         });
+    }   
+    
+    public SparseIntArray getWatchlist() {
+        return watchlist;
     }
     
-    public boolean isMovieInWatchlist(Integer movieId) {
-        return account != null && account.getWatchlist().containsKey(movieId);
+    public boolean isMovieInWatchlist(int movieId) {
+        return watchlist.get(movieId, -1) > 0;
+    }
+    
+    public void addMovieToWatchlist(int movieId) {
+        watchlist.put(movieId, movieId);
+    }
+    
+    public void removeMovieFromWatchlist(int movieId) {
+        watchlist.delete(movieId);
     }
     
     private void saveSessionId(String id) {

@@ -9,7 +9,7 @@
     <string name="please_wait">Please wait</string>
     <string name="release_date">Release date: %1$s</string>
     <string name="runtime">Duration: %1$s minutes</string>
-    <string name="votes">%1$s votes</string>
+    <string name="votes">%1$s / %2$s votes</string>
     <string name="now_playing">Now playing</string>
     <string name="upcoming">Upcoming</string>
     <string name="popular">Popular</string>
@@ -24,5 +24,7 @@
     <string name="cancel">Cancel</string>
     <string name="login_dialog_message">You have to log in order to use this feature</string>
     <string name="log_out">Log out</string>
+    <string name="login_in_progress">Signing in</string>
+    <string name="refresh">Refresh</string>
 
 </resources>

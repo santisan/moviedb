@@ -37,7 +37,7 @@ public abstract class BitmapLoader
     private static final int MESSAGE_CLOSE = 3;
     
     protected BitmapLoader() {
-        this(true);
+        this(false);
     }
     
     protected BitmapLoader(boolean usePlaceholderBitmap) 

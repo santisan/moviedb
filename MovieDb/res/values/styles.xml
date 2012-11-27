@@ -19,4 +19,15 @@
         <item name="android:listSelector">@drawable/photogrid_list_selector</item>
     </style>
     
+    <style name="Widget.MovieDb.ActionBarOverlay" parent="Widget.Sherlock.ActionBar">
+        <item name="android:background">@android:drawable/screen_background_dark_transparent</item>
+        <item name="background">@android:drawable/screen_background_dark_transparent</item>
+    </style>
+    
+    <style name="Theme.MovieDb.ActionBarOverlay" parent="AppTheme">
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="actionBarStyle">@style/Widget.MovieDb.ActionBarOverlay</item>
+    	<item name="android:actionBarStyle">@style/Widget.MovieDb.ActionBarOverlay</item>
+    </style>
+    
 </resources>

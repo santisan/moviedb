@@ -129,6 +129,12 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     {
         super.onActivityCreated(args);
         
+        pagedMovieSet = MovieDbApp.getPagedMovieSet(movieListType);
+        if (pagedMovieSet != null) {
+            adapter.notifyDataSetChanged();
+            return;
+        }
+        
         client.getMovieList(movieListType, requireSession, new MovieDbResultListener<PagedMovieSet>() {
             @Override
             public void onResult(PagedMovieSet result) 
@@ -140,7 +146,7 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
                 }
                 
                 pagedMovieSet = result;
-                MovieDbApp.setPagedMovieSet(pagedMovieSet);                
+                MovieDbApp.setPagedMovieSet(pagedMovieSet, movieListType);                
                                 
                 getMoviesInfo(result.getMovies(), new OnGetMoviesInfoListener() {                    
                     @Override

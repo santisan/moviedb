@@ -3,11 +3,15 @@
  */
 package com.santisan.moviedb;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import android.app.Application;
 import android.util.Log;
 
 import com.santisan.moviedb.ImageCache.ImageCacheParams;
 import com.santisan.moviedb.MovieDbClient.MovieDbResultListener;
+import com.santisan.moviedb.MovieDbClient.MovieListType;
 import com.santisan.moviedb.model.Config;
 import com.santisan.moviedb.model.PagedMovieSet;
 
@@ -16,11 +20,11 @@ public class MovieDbApp extends Application
     private static final String IMAGE_CACHE_DIR = "thumbs";
     
     private static Config.ImageConfig imageConfig;
-    private static PagedMovieSet pagedMovieSet;
+    private static Map<MovieListType, PagedMovieSet> pagedMovieSets = new HashMap<MovieListType, PagedMovieSet>();
     private static UserUtils userUtils;
     
     @Override
-    public void onCreate() 
+    public void onCreate()
     {
         super.onCreate();
         
@@ -68,12 +72,12 @@ public class MovieDbApp extends Application
         MovieDbApp.imageConfig = imageConfig;
     }
     
-    public static PagedMovieSet getPagedMovieSet() {
-        return pagedMovieSet;
+    public static PagedMovieSet getPagedMovieSet(MovieListType type) {
+        return pagedMovieSets.get(type);
     }
     
-    public static void setPagedMovieSet(PagedMovieSet pagedMovieSet) {
-        MovieDbApp.pagedMovieSet = pagedMovieSet;
+    public static void setPagedMovieSet(PagedMovieSet pagedMovieSet, MovieListType type) {
+        MovieDbApp.pagedMovieSets.put(type, pagedMovieSet);
     }
     
     public static UserUtils getUserUtils() {

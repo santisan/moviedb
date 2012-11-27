@@ -2,7 +2,6 @@ MovieDb
 =================
 
 MovieDb is an IMDB-like app for Android 2.2+ that integrates with data from
-
 http://www.themoviedb.org
 
 It uses ActionBarSherlock, a library that provides Action bar compatibility

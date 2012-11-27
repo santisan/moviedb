@@ -5,6 +5,9 @@ package com.santisan.moviedb.model;
 
 import java.util.List;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.SerializedName;
 
 public class TrailerList
@@ -23,7 +26,7 @@ public class TrailerList
         this.youtubeTrailers = youtubeTrailers;
     }
     
-    public class YoutubeTrailer
+    public static class YoutubeTrailer extends Entity
     {
         private String name;
         private String size;
@@ -33,6 +36,13 @@ public class TrailerList
         {
         }
         
+        public YoutubeTrailer(Parcel in)
+        {
+            name = in.readString();
+            size = in.readString();
+            source = in.readString();
+        }
+
         public String getName() {
             return name;
         }
@@ -56,5 +66,25 @@ public class TrailerList
         public void setSource(String source) {
             this.source = source;
         }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) 
+        {
+            dest.writeString(name);
+            dest.writeString(size);
+            dest.writeString(source);
+        }
+        
+        public static final Parcelable.Creator<YoutubeTrailer> CREATOR = new Parcelable.Creator<YoutubeTrailer>() {        
+            @Override
+            public YoutubeTrailer[] newArray(int size) {
+                return new YoutubeTrailer[size];
+            }
+            
+            @Override
+            public YoutubeTrailer createFromParcel(Parcel source) {
+                return new YoutubeTrailer(source);
+            }
+        };
     }
 }

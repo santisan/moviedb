@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,7 +20,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +29,7 @@ import com.santisan.moviedb.BitmapLoaderAsync;
 import com.santisan.moviedb.MovieDbApp;
 import com.santisan.moviedb.MovieDbClient;
 import com.santisan.moviedb.MovieDbClient.MovieDbResultListener;
+import com.santisan.moviedb.MovieDbClient.MovieListType;
 import com.santisan.moviedb.R;
 import com.santisan.moviedb.Utils;
 import com.santisan.moviedb.model.Casts;
@@ -43,31 +44,35 @@ public class MovieDetailFragment extends SherlockFragment
     public static final String TAG = "MovieDetailFragment";
     private static final String YOUTUBE_URL = "http://m.youtube.com/watch?v="; //"http://youtu.be/";
     private static final String POSITION = "position";
+    private static final String MOVIE_LIST_TYPE = "movieListType";
+    private static final String MOVIE = "movie";
     
     private TextView titleTextView;
     private ImageView posterImageView;
     private TextView overviewTextView;
     private TextView runtimeTextView;
     private TextView votesTextView;
-    private RatingBar ratingBar;
+    private TextView castTextView;
+    //private RatingBar ratingBar;
     private Button trailerButton;
     private Button watchlistButton;
     
     private int movieId = 0;
     private int position;
-    private Movie movie;    
+    private MovieListType movieListType;
+    private Movie movie = null;
     private BitmapLoader imageLoader;
 
     private DisplayMetrics displayMetrics;
-    private WindowManager windowManager;
+    private WindowManager windowManager;      
     
-    
-    public static MovieDetailFragment newInstance(int movieId, int position)
+    public static MovieDetailFragment newInstance(int movieId, int position, MovieListType type)
     {
         MovieDetailFragment frag = new MovieDetailFragment();
         Bundle args = new Bundle();
         args.putInt(MOVIE_ID, movieId);
         args.putInt(POSITION, position);
+        args.putString(MOVIE_LIST_TYPE, type.name());
         frag.setArguments(args);
         return frag;
     }
@@ -76,7 +81,7 @@ public class MovieDetailFragment extends SherlockFragment
     public void onCreate(Bundle savedInstanceState) 
     {
         super.onCreate(savedInstanceState);
-        imageLoader = new BitmapLoaderAsync();       
+        imageLoader = new BitmapLoaderAsync(false);       
         
         displayMetrics = new DisplayMetrics();         
         windowManager = (WindowManager)getSherlockActivity().getSystemService(Context.WINDOW_SERVICE);
@@ -84,14 +89,18 @@ public class MovieDetailFragment extends SherlockFragment
         
         getSherlockActivity().setSupportProgressBarIndeterminateVisibility(true);
         
-        if (getArguments() != null) {
-            movieId = getArguments().getInt(MOVIE_ID, 0);
-            position = getArguments().getInt(POSITION, 0);
-        }
-        if (movieId == 0 && savedInstanceState != null) {
+        if (savedInstanceState != null) {
             movieId = savedInstanceState.getInt(MOVIE_ID);
             position = savedInstanceState.getInt(POSITION);
+            movieListType = MovieListType.valueOf(savedInstanceState.getString(MOVIE_LIST_TYPE));
+            movie = (Movie)savedInstanceState.getParcelable(MOVIE);
         }
+        else if (getArguments() != null) {
+            movieId = getArguments().getInt(MOVIE_ID, 0);
+            position = getArguments().getInt(POSITION, 0);
+            movieListType = MovieListType.valueOf(getArguments().getString(MOVIE_LIST_TYPE));
+        }
+        
         if (movieId == 0)
             Log.e(TAG, "Couldn't get the movieId from arguments nor from savedInstanceState");
         if (position == 0)
@@ -99,6 +108,11 @@ public class MovieDetailFragment extends SherlockFragment
             
         if (movieId != 0)
             setMovie(movieId, position);
+        
+        Log.d(TAG, "watchlist: ");
+        SparseIntArray wl = MovieDbApp.getUserUtils().getWatchlist();
+        for (int i=0; i < wl.size(); i++)
+            Log.d(TAG, String.valueOf(wl.keyAt(i)) + ", ");
     }
     
     @Override
@@ -111,7 +125,8 @@ public class MovieDetailFragment extends SherlockFragment
         overviewTextView = (TextView)v.findViewById(R.id.overview);
         runtimeTextView = (TextView)v.findViewById(R.id.runtime);
         votesTextView = (TextView)v.findViewById(R.id.votes);
-        ratingBar = (RatingBar)v.findViewById(R.id.ratingBar);
+        castTextView = (TextView)v.findViewById(R.id.cast);
+        //ratingBar = (RatingBar)v.findViewById(R.id.ratingBar);
         watchlistButton = (Button)v.findViewById(R.id.watchlistBtn);
         return v;
     }
@@ -127,10 +142,17 @@ public class MovieDetailFragment extends SherlockFragment
         super.onSaveInstanceState(outState);
         outState.putInt(MOVIE_ID, movieId);
         outState.putInt(POSITION, position);
-    }
+        outState.putString(MOVIE_LIST_TYPE, movieListType.name());
+        outState.putParcelable(MOVIE, movie);
+    }   
     
     private void setMovie(final int movieId, final int position)
-    {     
+    {
+        if (movie != null) {
+            setMovieData();
+            return;
+        }
+        
         MovieDbClient client = new MovieDbClient();
         client.getMovieWithTrailers(movieId, new MovieDbResultListener<Movie>() {
             @Override
@@ -147,30 +169,48 @@ public class MovieDetailFragment extends SherlockFragment
                 
                 movie = result;
                 movie.setInWatchlist(MovieDbApp.getUserUtils().isMovieInWatchlist(movie.getId()));
-                Casts casts = MovieDbApp.getPagedMovieSet().getMovies().get(position).getCasts();
+                Casts casts = MovieDbApp.getPagedMovieSet(movieListType).getMovies().get(position).getCasts();
                 movie.setCasts(casts);
             
-                imageLoader.LoadBitmapAsync(movie.getPosterUrl(getPosterSize()), posterImageView);                
-                titleTextView.setText(movie.getTitle());
-                overviewTextView.setText(movie.getOverview());
-                runtimeTextView.setText(getString(R.string.runtime, movie.getRuntime()));
-                votesTextView.setText(getString(R.string.votes, movie.getVoteCount()));
-                ratingBar.setRating(movie.getVoteAverage() * 0.5f);                
-                trailerButton.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        watchTrailer();
-                    }
-                });
-                watchlistButton.setText(movie.isInWatchlist() ? getString(R.string.remove_from_watchlist) : 
-                    getString(R.string.add_to_watchlist));
-                watchlistButton.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        addOrRemoveFromWatchlist();
-                    }                   
-                });          
-                getSherlockActivity().setSupportProgressBarIndeterminateVisibility(false);
+                setMovieData();
+            }
+        });
+    }
+    
+    private void setMovieData()
+    {
+        final String posterUrl = movie.getPosterUrl(getPosterSize());
+        imageLoader.LoadBitmapAsync(posterUrl, posterImageView);
+        String year = movie.getReleaseDate().substring(0, 4);
+        titleTextView.setText(movie.getTitle() + " (" + year + ")");
+        overviewTextView.setText(movie.getOverview());
+        runtimeTextView.setText(getString(R.string.runtime, movie.getRuntime()));
+        votesTextView.setText(getString(R.string.votes, movie.getVoteAverage(), movie.getVoteCount()));
+        castTextView.setText(movie.getCasts().getCastShortString());
+        //ratingBar.setRating(movie.getVoteAverage() * 0.5f);
+        trailerButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                watchTrailer();
+            }
+        });
+        watchlistButton.setText(movie.isInWatchlist() ? getString(R.string.remove_from_watchlist) : 
+            getString(R.string.add_to_watchlist));
+        watchlistButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addOrRemoveFromWatchlist();
+            }                   
+        });          
+        getSherlockActivity().setSupportProgressBarIndeterminateVisibility(false);
+        
+        posterImageView.setOnClickListener(new OnClickListener() {            
+            @Override
+            public void onClick(View v) 
+            {
+                Intent intent = new Intent(getSherlockActivity(), ImageActivity.class);
+                intent.putExtra(ImageActivity.IMAGE_URL_EXTRA, posterUrl);
+                getSherlockActivity().startActivity(intent);
             }
         });
     }
@@ -197,10 +237,11 @@ public class MovieDetailFragment extends SherlockFragment
             return;
         }
         
-        MovieDbClient client = new MovieDbClient();
-        //TODO: check if the movie is in watchlist
+        getSherlockActivity().setSupportProgressBarIndeterminateVisibility(true);        
         final boolean addToWatchlist = !movie.isInWatchlist();
         WatchlistMovie watchlistMovie = new WatchlistMovie(movie.getId(), addToWatchlist);
+        
+        MovieDbClient client = new MovieDbClient();
         client.addOrRemoveFromWatchlist(watchlistMovie, new MovieDbResultListener<PostResponse>() {            
             @Override
             public void onResult(PostResponse result) 
@@ -210,10 +251,17 @@ public class MovieDetailFragment extends SherlockFragment
                             Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    movie.setInWatchlist(addToWatchlist);
-                    watchlistButton.setText(movie.isInWatchlist() ? getString(R.string.remove_from_watchlist) : 
-                        getString(R.string.add_to_watchlist));
+                    movie.setInWatchlist(addToWatchlist);                 
+                    if (movie.isInWatchlist()) {
+                        MovieDbApp.getUserUtils().addMovieToWatchlist(movie.getId());
+                        watchlistButton.setText(getString(R.string.remove_from_watchlist));
+                    }
+                    else {
+                        MovieDbApp.getUserUtils().removeMovieFromWatchlist(movie.getId());
+                        watchlistButton.setText(getString(R.string.add_to_watchlist));
+                    }
                 }
+                getSherlockActivity().setSupportProgressBarIndeterminateVisibility(false);
             }
         });
     }

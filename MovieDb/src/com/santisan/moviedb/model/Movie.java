@@ -3,12 +3,15 @@
  */
 package com.santisan.moviedb.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.SerializedName;
 import com.santisan.moviedb.MovieDbApp;
 import com.santisan.moviedb.Utils;
 import com.santisan.moviedb.model.TrailerList.YoutubeTrailer;
 
-public class Movie
+public class Movie extends Entity
 {
     public enum PosterSize { w92, w154, w185, w342, w500, original }
     
@@ -30,6 +33,43 @@ public class Movie
     
     public Movie()
     {
+    }
+    
+    public Movie(Parcel in)
+    {
+        backdropPath = in.readString();
+        id = in.readInt();
+        originalTitle = in.readString();
+        releaseDate = in.readString();
+        posterPath = in.readString();
+        title = in.readString();
+        voteAverage = in.readFloat();
+        voteCount = in.readInt();
+        overview = in.readString();
+        runtime = in.readInt();
+        trailers = new TrailerList();
+        in.readTypedList(trailers.getYoutubeTrailers(), YoutubeTrailer.CREATOR);
+        casts = new Casts();
+        in.readTypedList(casts.getCast(), Actor.CREATOR);
+        inWatchlist = (in.readInt() == 1);
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) 
+    {
+        dest.writeString(backdropPath);
+        dest.writeInt(id);
+        dest.writeString(originalTitle);
+        dest.writeString(releaseDate);
+        dest.writeString(posterPath);
+        dest.writeString(title);
+        dest.writeFloat(voteAverage);
+        dest.writeInt(voteCount);
+        dest.writeString(overview);
+        dest.writeInt(runtime);
+        dest.writeTypedList(trailers.getYoutubeTrailers());
+        dest.writeTypedList(casts.getCast());
+        dest.writeInt(inWatchlist ? 1 : 0);
     }
     
     public String getBackdropPath() {
@@ -160,4 +200,16 @@ public class Movie
         if (Utils.isNullOrWhitespace(backdropPath)) return "";
         return MovieDbApp.getImageConfig().getBaseUrl() + size.name() + backdropPath;
     }
+
+    public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {        
+        @Override
+        public Movie[] newArray(int size) {
+            return new Movie[size];
+        }
+        
+        @Override
+        public Movie createFromParcel(Parcel source) {
+            return new Movie(source);
+        }
+    };
 }
