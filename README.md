@@ -1,10 +1,12 @@
 MovieDb
 =================
 
-MovieDb is an Android demo app that lets you check the latest movies from
+MovieDb is an IMDB-like app for Android 2.2+ that integrates with data from
 themoviedb.org.
 
-It uses ActionBarSherlock library http://actionbarsherlock.com/
+It uses ActionBarSherlock, a library that provides Action bar compatibility
+for older versions of Android.
+http://actionbarsherlock.com/
 
 
 
