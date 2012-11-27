@@ -3,7 +3,9 @@
  */
 package com.santisan.moviedb.ui;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -32,6 +34,8 @@ import com.santisan.moviedb.Utils;
 import com.santisan.moviedb.model.Casts;
 import com.santisan.moviedb.model.Movie;
 import com.santisan.moviedb.model.Movie.PosterSize;
+import com.santisan.moviedb.model.PostResponse;
+import com.santisan.moviedb.model.WatchlistMovie;
 
 public class MovieDetailFragment extends SherlockFragment
 {    
@@ -47,6 +51,7 @@ public class MovieDetailFragment extends SherlockFragment
     private TextView votesTextView;
     private RatingBar ratingBar;
     private Button trailerButton;
+    private Button watchlistButton;
     
     private int movieId = 0;
     private int position;
@@ -54,8 +59,8 @@ public class MovieDetailFragment extends SherlockFragment
     private BitmapLoader imageLoader;
 
     private DisplayMetrics displayMetrics;
-
     private WindowManager windowManager;
+    
     
     public static MovieDetailFragment newInstance(int movieId, int position)
     {
@@ -107,6 +112,7 @@ public class MovieDetailFragment extends SherlockFragment
         runtimeTextView = (TextView)v.findViewById(R.id.runtime);
         votesTextView = (TextView)v.findViewById(R.id.votes);
         ratingBar = (RatingBar)v.findViewById(R.id.ratingBar);
+        watchlistButton = (Button)v.findViewById(R.id.watchlistBtn);
         return v;
     }
     
@@ -140,6 +146,7 @@ public class MovieDetailFragment extends SherlockFragment
                 }
                 
                 movie = result;
+                movie.setInWatchlist(MovieDbApp.getUserUtils().isMovieInWatchlist(movie.getId()));
                 Casts casts = MovieDbApp.getPagedMovieSet().getMovies().get(position).getCasts();
                 movie.setCasts(casts);
             
@@ -148,29 +155,82 @@ public class MovieDetailFragment extends SherlockFragment
                 overviewTextView.setText(movie.getOverview());
                 runtimeTextView.setText(getString(R.string.runtime, movie.getRuntime()));
                 votesTextView.setText(getString(R.string.votes, movie.getVoteCount()));
-                ratingBar.setRating(movie.getVoteAverage() * 0.5f);
-                
+                ratingBar.setRating(movie.getVoteAverage() * 0.5f);                
                 trailerButton.setOnClickListener(new OnClickListener() {
                     @Override
-                    public void onClick(View v) 
-                    {
-                        if (Utils.isNullOrWhitespace(movie.getYoutubeTrailer())) 
-                        {
-                            Toast.makeText(getSherlockActivity(), R.string.trailer_unavailable, 
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                        else {
-                            String url = YOUTUBE_URL + movie.getYoutubeTrailer() + "&hd=1";
-                            Log.d(TAG, "trailer URL: " + url);
-                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                            startActivity(intent);
-                        }
+                    public void onClick(View v) {
+                        watchTrailer();
                     }
                 });
-                
+                watchlistButton.setText(movie.isInWatchlist() ? getString(R.string.remove_from_watchlist) : 
+                    getString(R.string.add_to_watchlist));
+                watchlistButton.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        addOrRemoveFromWatchlist();
+                    }                   
+                });          
                 getSherlockActivity().setSupportProgressBarIndeterminateVisibility(false);
             }
         });
+    }
+    
+    private void addOrRemoveFromWatchlist() 
+    {
+        if (!MovieDbApp.getUserUtils().hasSession()) 
+        {
+            final AlertDialog.Builder dialog = new AlertDialog.Builder(getSherlockActivity());
+            dialog.setTitle(R.string.add_to_watchlist).
+            setMessage(R.string.login_dialog_message).
+            setPositiveButton(R.string.log_in, new DialogInterface.OnClickListener() {                
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    MovieDbApp.getUserUtils().getAuthToken(); //TODO: add call to getSession when back to the activity
+                }
+            }).
+            setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {                
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            }).show();
+            return;
+        }
+        
+        MovieDbClient client = new MovieDbClient();
+        //TODO: check if the movie is in watchlist
+        final boolean addToWatchlist = !movie.isInWatchlist();
+        WatchlistMovie watchlistMovie = new WatchlistMovie(movie.getId(), addToWatchlist);
+        client.addOrRemoveFromWatchlist(watchlistMovie, new MovieDbResultListener<PostResponse>() {            
+            @Override
+            public void onResult(PostResponse result) 
+            {
+                if (!result.getStatusMessage().toLowerCase().equals("success")) {
+                    Toast.makeText(getSherlockActivity(), R.string.operation_failed, 
+                            Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    movie.setInWatchlist(addToWatchlist);
+                    watchlistButton.setText(movie.isInWatchlist() ? getString(R.string.remove_from_watchlist) : 
+                        getString(R.string.add_to_watchlist));
+                }
+            }
+        });
+    }
+    
+    private void watchTrailer()
+    {
+        if (Utils.isNullOrWhitespace(movie.getYoutubeTrailer())) 
+        {
+            Toast.makeText(getSherlockActivity(), R.string.trailer_unavailable, 
+                    Toast.LENGTH_SHORT).show();
+        }
+        else {
+            String url = YOUTUBE_URL + movie.getYoutubeTrailer() + "&hd=1";
+            Log.d(TAG, "trailer URL: " + url);
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        }
     }
     
     private PosterSize getPosterSize()

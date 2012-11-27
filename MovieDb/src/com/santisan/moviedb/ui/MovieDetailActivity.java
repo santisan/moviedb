@@ -35,7 +35,7 @@ public class MovieDetailActivity extends SherlockFragmentActivity
     private ViewPager pager;
     private PagedMovieSet movieSet;
     private boolean requireSession;
-    private MovieListType movieListType;    
+    private MovieListType movieListType;
 
     @Override
     public void onCreate(Bundle savedInstanceState) 
@@ -56,7 +56,7 @@ public class MovieDetailActivity extends SherlockFragmentActivity
             movieListType = MovieListType.valueOf(type);
         
         SetupViewPager();
-    }   
+    }
     
     private void SetupViewPager()
     {      
@@ -83,8 +83,9 @@ public class MovieDetailActivity extends SherlockFragmentActivity
     public boolean onOptionsItemSelected(MenuItem item) 
     {
         if (item.getItemId() == android.R.id.home) 
-        {
+        {            
             Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
             return true;
         }

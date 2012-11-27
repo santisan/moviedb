@@ -5,6 +5,9 @@ package com.santisan.moviedb;
 
 import java.util.Collection;
 
+import android.annotation.TargetApi;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Build;
 
 public class Utils
@@ -26,6 +29,22 @@ public class Utils
     
     public static <T> boolean isNullOrEmpty(Collection<T> list) {
         return list == null || list.isEmpty();
+    }
+    
+    @TargetApi(9)
+    public static void commitSharedPreferences(final SharedPreferences.Editor editor)
+    {
+        if (Utils.hasGingerbread())
+            editor.apply();
+        else {
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    editor.commit();
+                    return null;
+                }
+            }.execute(); 
+        }
     }
     
     public static boolean hasFroyo() {

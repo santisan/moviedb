@@ -17,7 +17,12 @@
     <string name="watchlist">Watchlist</string>
     <string name="trailer_unavailable">Sorry, the trailer for this movie is unavailable</string>
     <string name="log_in">Log in</string>
-    <string name="getAuthTokenError">Operation failed: please try again later</string>
+    <string name="operation_failed">Operation failed: please try again later</string>
     <string name="movies">Movies</string>
+    <string name="add_to_watchlist">Add to Watchlist</string>
+    <string name="remove_from_watchlist">Remove from Watchlist</string>
+    <string name="cancel">Cancel</string>
+    <string name="login_dialog_message">You have to log in order to use this feature</string>
+    <string name="log_out">Log out</string>
 
 </resources>

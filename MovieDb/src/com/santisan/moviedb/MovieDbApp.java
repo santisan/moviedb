@@ -5,16 +5,14 @@ package com.santisan.moviedb;
 
 import android.app.Application;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.santisan.moviedb.ImageCache.ImageCacheParams;
 import com.santisan.moviedb.MovieDbClient.MovieDbResultListener;
 import com.santisan.moviedb.model.Config;
 import com.santisan.moviedb.model.PagedMovieSet;
-import com.santisan.moviedb.ui.MainActivity;
 
 public class MovieDbApp extends Application
-{
+{    
     private static final String IMAGE_CACHE_DIR = "thumbs";
     
     private static Config.ImageConfig imageConfig;

@@ -30,10 +30,7 @@
         </activity>
         <activity 
             android:name=".ui.MovieDetailActivity" 
-            android:label="@string/title_activity_main" />
-        <activity 
-            android:name=".ui.MovieListActivity" 
-            android:label="@string/title_activity_main" />
+            android:label="@string/title_activity_main" />        
     </application>
 
 </manifest>

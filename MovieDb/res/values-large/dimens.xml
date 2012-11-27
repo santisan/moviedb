@@ -6,7 +6,9 @@
     <dimen name="image_detail_pager_margin">80dp</dimen>
     <dimen name="list_thumbnail_size">128dp</dimen>
     <dimen name="list_item_background_height">240dp</dimen>
-    <dimen name="main_activity_grid_height">480dp</dimen>
+    <dimen name="poster_width">342dp</dimen>
+    <dimen name="poster_height">508dp</dimen>
+    
     <dimen name="smallTextSize">16sp</dimen>
     <dimen name="mediumTextSize">22sp</dimen>
     <dimen name="largeTextSize">28sp</dimen>

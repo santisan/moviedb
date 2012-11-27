@@ -3,6 +3,9 @@
  */
 package com.santisan.moviedb.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.annotations.SerializedName;
 
 public class Account
@@ -13,6 +16,8 @@ public class Account
     @SerializedName("iso_639_1")        private String languageCode;
     @SerializedName("name")             private String name;
     @SerializedName("username")         private String username;
+    
+    private Map<Integer, Integer> watchlist = new HashMap<Integer, Integer>();
     
     public Account()
     {
@@ -64,5 +69,13 @@ public class Account
     
     public void setIncludeAdult(boolean includeAdult) {
         this.includeAdult = includeAdult;
+    }
+    
+    public Map<Integer, Integer> getWatchlist() {
+        return watchlist;
+    }
+    
+    public void setWatchlist(Map<Integer, Integer> watchlist) {
+        this.watchlist = watchlist;
     }
 }

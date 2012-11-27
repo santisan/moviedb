@@ -157,7 +157,7 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     {
         Intent intent = new Intent(getSherlockActivity(), MovieDetailActivity.class);
         intent.putExtra(MovieDetailActivity.EXTRA_MOVIE_POSITION, position);
-        intent.putExtra(MovieDetailActivity.EXTRA_MOVIE_LIST_TYPE, movieListType);
+        intent.putExtra(MovieDetailActivity.EXTRA_MOVIE_LIST_TYPE, movieListType.name());
         intent.putExtra(MovieDetailActivity.EXTRA_REQUIRE_SESSION, requireSession);
         startActivity(intent);
     }   

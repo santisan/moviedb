@@ -9,13 +9,13 @@
 	        
 	    <ImageView
 	        android:id="@+id/poster"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
+	        android:layout_width="@dimen/poster_width"
+	        android:layout_height="@dimen/poster_height"
 	        android:layout_alignParentLeft="true"
 	        android:layout_alignParentTop="true"
 	        android:layout_marginLeft="8dp"
 	        android:layout_marginTop="8dp"
-	        android:src="@drawable/empty_photo"
+	        android:scaleType="fitXY"
 	        android:contentDescription="@string/imageview_description" />
 	
 	    <TextView
@@ -78,6 +78,7 @@
 	        android:layout_height="wrap_content"
 	        android:layout_alignLeft="@+id/overviewTxt"
 	        android:layout_below="@+id/overviewTxt"
+	        android:maxLines="8"
 	        android:text="Overview"
 	        android:textSize="@dimen/overviewTextSize" />
 		
@@ -89,6 +90,16 @@
 	        android:layout_below="@+id/overview"
 	        android:layout_marginTop="8dp"
 	        android:text="@string/watch_trailer" />
+	    
+	    <Button
+	        android:id="@+id/watchlistBtn"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_toRightOf="@+id/trailerBtn"
+	        android:layout_alignTop="@id/trailerBtn"
+	        android:layout_below="@+id/overview"
+	        android:layout_marginLeft="8dp"
+	        android:text="@string/add_to_watchlist" />
 	
 	</RelativeLayout>
 </ScrollView>

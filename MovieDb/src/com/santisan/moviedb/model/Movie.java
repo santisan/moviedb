@@ -26,6 +26,7 @@ public class Movie
     @SerializedName("runtime")          private int runtime;
     @SerializedName("trailers")         private TrailerList trailers;
     @SerializedName("casts")            private Casts casts;
+    private boolean inWatchlist = false;
     
     public Movie()
     {
@@ -125,6 +126,14 @@ public class Movie
     
     public void setCasts(Casts casts) {
         this.casts = casts;
+    }
+    
+    public boolean isInWatchlist() {
+        return inWatchlist;
+    }
+    
+    public void setInWatchlist(boolean inWatchlist) {
+        this.inWatchlist = inWatchlist;
     }
     
     public String getYoutubeTrailer()

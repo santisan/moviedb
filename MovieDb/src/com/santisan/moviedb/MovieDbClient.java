@@ -17,6 +17,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
@@ -30,7 +31,9 @@ import com.santisan.moviedb.model.AuthToken;
 import com.santisan.moviedb.model.Config;
 import com.santisan.moviedb.model.Movie;
 import com.santisan.moviedb.model.PagedMovieSet;
+import com.santisan.moviedb.model.PostResponse;
 import com.santisan.moviedb.model.Session;
+import com.santisan.moviedb.model.WatchlistMovie;
 
 public class MovieDbClient
 {
@@ -43,6 +46,7 @@ public class MovieDbClient
     public enum HttpMethod { GET, POST }
     
     public interface MovieDbResultListener<T> {
+        //TODO: change to onSuccess and add onFailure method to improve error handling
         void onResult(T result);
     }  
     
@@ -201,11 +205,24 @@ public class MovieDbClient
         }.execute();
     }
     
-    public void getAccount(final String sessionId, final MovieDbResultListener<Account> listener)
+    public void getAccount(final MovieDbResultListener<Account> listener)
     {
-        final String url = "/account";
+        final String url = "/account";        
+        
+        UserUtils userUtils = MovieDbApp.getUserUtils();
+        if (!userUtils.hasSession()) {
+            Log.e(TAG, "There is no valid session!");
+            listener.onResult(null);
+            return;
+        }
+        if (userUtils.hasAccount()) {
+            Log.e(TAG, "There is already an account! Log out first!");
+            listener.onResult(null);
+            return;
+        }
+        
         final List<NameValuePair> requestParams = new ArrayList<NameValuePair>();
-        requestParams.add(new NameValue("session_id", sessionId));
+        requestParams.add(new NameValue("session_id", userUtils.getSessionId()));
         
         new AsyncTask<Void, Void, Account>() {
             @Override
@@ -220,11 +237,53 @@ public class MovieDbClient
         }.execute();
     }
     
+    public void addOrRemoveFromWatchlist(final WatchlistMovie movie, final MovieDbResultListener<PostResponse> listener)
+    {
+        final String url = "/account/{id}/movie_watchlist";             
+        
+        UserUtils userUtils = MovieDbApp.getUserUtils();
+        if (!userUtils.isLoggedIn()) {
+            Log.e(TAG, "There is no valid session!");
+            listener.onResult(null);
+            return;
+        }
+        
+        final List<NameValuePair> requestParams = new ArrayList<NameValuePair>(); 
+        requestParams.add(new NameValue("session_id", userUtils.getSessionId()));
+        this.url = url.replace("{id}", String.valueOf(userUtils.getAccount().getId()));
+        
+        final List<Object> jsonParams = new ArrayList<Object>();
+        if (movie != null) {
+            jsonParams.add(movie);
+        }
+        
+        new AsyncTask<Void, Void, PostResponse>() {
+            @Override
+            protected PostResponse doInBackground(Void... params) {
+                return makeRequest(MovieDbClient.this.url, HttpMethod.POST, PostResponse.class, requestParams, jsonParams);
+            }
+            
+            @Override
+            protected void onPostExecute(PostResponse result) {
+                listener.onResult(result);
+            }
+        }.execute();
+    }
+    
+    /**
+     **********   HTTP request methods   **********   
+     */
+    
     private <T> T makeRequest(String url, HttpMethod httpMethod, Class<T> classOfT) {
         return makeRequest(url, httpMethod, classOfT, new ArrayList<NameValuePair>());
-    }   
+    }
     
-    private <T> T makeRequest(String url, HttpMethod httpMethod, Class<T> classOfT, List<NameValuePair> params)
+    private <T> T makeRequest(String url, HttpMethod httpMethod, Class<T> classOfT, List<NameValuePair> params) {
+        return makeRequest(url, httpMethod, classOfT, params, null);
+    }
+    
+    private <T> T makeRequest(String url, HttpMethod httpMethod, Class<T> classOfT, List<NameValuePair> params,
+            List<Object> jsonParams)
     {
         params.add(new NameValue("api_key", API_KEY));
         
@@ -233,7 +292,7 @@ public class MovieDbClient
         {
             String separator = (i == 0) ? "?" : "&";
             NameValuePair param = params.get(i);
-            url += separator + param.getName() + "=" + encodeUrl(param.getValue()); 
+            url += separator + param.getName() + "=" + encodeUrl(param.getValue());
         }  
         
         url = BASE_URL + url;
@@ -241,21 +300,29 @@ public class MovieDbClient
                         
         AndroidHttpClient httpClient = AndroidHttpClient.newInstance("com.santisan.moviedb");
         String acceptType = "application/json";
-        String contentType = acceptType + "; charset=" + HTTP.UTF_8;
+        String contentType = "application/json"; //acceptType + "; charset=" + HTTP.UTF_8;
         T result = null;        
         HttpUriRequest request = null;
         
         try {
             if (httpMethod == HttpMethod.GET) {
                 request = new HttpGet(url);
-                //contentType = acceptType + "; charset=" + HTTP.UTF_8;
             }
-            else if (httpMethod == HttpMethod.POST) {
-                //HttpPost post = new HttpPost(url);
-                //UrlEncodedFormEntity requestEntity = new UrlEncodedFormEntity(formParams, HTTP.UTF_8);
-                //post.setEntity(requestEntity);
-                request = new HttpPost(url); //post;
-                //contentType = "application/x-www-form-urlencoded; charset=" + HTTP.UTF_8;
+            else if (httpMethod == HttpMethod.POST) 
+            {                
+                HttpPost post = new HttpPost(url);
+                if (jsonParams != null && jsonParams.size() > 0) 
+                {
+                    StringBuilder builder = new StringBuilder();
+                    for (Object param : jsonParams) {
+                        gson.toJson(param, builder);
+                    }
+                    String body = builder.toString();
+                    StringEntity requestEntity = new StringEntity(body, HTTP.UTF_8);                
+                    post.setEntity(requestEntity);
+                    Log.d(TAG, "POST request body: " + body);
+                }
+                request = post;
             }
             
             request.addHeader("Accept", acceptType);
@@ -278,11 +345,11 @@ public class MovieDbClient
                         if (AuthToken.class.isInstance(result)) 
                         {
                             String headerName = "Authentication-Callback";
-                            if (response.containsHeader(headerName))                 
+                            if (response.containsHeader(headerName))
                                 ((AuthToken)result).setAuthCallback(response.getFirstHeader(headerName).getValue());
                         } 
                         
-                        //Log.d(TAG, "response: " + json);
+                        Log.d(TAG, "response: " + json);
                         /*Log.d(TAG, "headers:");
                         for (Header h : response.getAllHeaders()) {
                             Log.d(TAG, h.getName() + ": " + h.getValue());
