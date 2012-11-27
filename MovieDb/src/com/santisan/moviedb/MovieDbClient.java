@@ -349,7 +349,7 @@ public class MovieDbClient
                                 ((AuthToken)result).setAuthCallback(response.getFirstHeader(headerName).getValue());
                         } 
                         
-                        Log.d(TAG, "response: " + json);
+                        //Log.d(TAG, "response: " + json);
                         /*Log.d(TAG, "headers:");
                         for (Header h : response.getAllHeaders()) {
                             Log.d(TAG, h.getName() + ": " + h.getValue());

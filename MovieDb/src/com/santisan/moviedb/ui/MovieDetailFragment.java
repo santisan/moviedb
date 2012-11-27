@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -123,6 +124,7 @@ public class MovieDetailFragment extends SherlockFragment
         posterImageView = (ImageView)v.findViewById(R.id.poster);
         trailerButton = (Button)v.findViewById(R.id.trailerBtn);
         overviewTextView = (TextView)v.findViewById(R.id.overview);
+        overviewTextView.setMovementMethod(new ScrollingMovementMethod());
         runtimeTextView = (TextView)v.findViewById(R.id.runtime);
         votesTextView = (TextView)v.findViewById(R.id.votes);
         castTextView = (TextView)v.findViewById(R.id.cast);
@@ -179,14 +181,15 @@ public class MovieDetailFragment extends SherlockFragment
     
     private void setMovieData()
     {
-        final String posterUrl = movie.getPosterUrl(getPosterSize());
-        imageLoader.LoadBitmapAsync(posterUrl, posterImageView);
+        imageLoader.LoadBitmapAsync(movie.getPosterUrl(getPosterSize()), posterImageView);
         String year = movie.getReleaseDate().substring(0, 4);
         titleTextView.setText(movie.getTitle() + " (" + year + ")");
         overviewTextView.setText(movie.getOverview());
         runtimeTextView.setText(getString(R.string.runtime, movie.getRuntime()));
         votesTextView.setText(getString(R.string.votes, movie.getVoteAverage(), movie.getVoteCount()));
-        castTextView.setText(movie.getCasts().getCastShortString());
+        if (movie.getCasts() != null) {
+            castTextView.setText(movie.getCasts().getCastShortString());
+        }
         //ratingBar.setRating(movie.getVoteAverage() * 0.5f);
         trailerButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -209,7 +212,7 @@ public class MovieDetailFragment extends SherlockFragment
             public void onClick(View v) 
             {
                 Intent intent = new Intent(getSherlockActivity(), ImageActivity.class);
-                intent.putExtra(ImageActivity.IMAGE_URL_EXTRA, posterUrl);
+                intent.putExtra(ImageActivity.IMAGE_URL_EXTRA, movie.getPosterUrl(getPosterSizeBig()));
                 getSherlockActivity().startActivity(intent);
             }
         });
@@ -285,11 +288,21 @@ public class MovieDetailFragment extends SherlockFragment
     {
         PosterSize posterSize = PosterSize.w342;
         if (displayMetrics.widthPixels <= 600)
-            posterSize = PosterSize.w185;
+            posterSize = PosterSize.w92;
         else if (displayMetrics.widthPixels >= 800)
             posterSize = PosterSize.w500;
             
         Log.d(TAG, "posterSize: " + posterSize.name());
+        return posterSize;
+    }
+    
+    private PosterSize getPosterSizeBig()
+    {
+        PosterSize posterSize = PosterSize.w342;
+        if (displayMetrics.widthPixels >= 700)
+            posterSize = PosterSize.w500;
+            
+        Log.d(TAG, "posterSizeBig: " + posterSize.name());
         return posterSize;
     }
     

@@ -106,6 +106,14 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle args) 
     {
+        if (requireSession && !MovieDbApp.getUserUtils().isLoggedIn()) 
+        {
+            TextView text = new TextView(getSherlockActivity());
+            text.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            text.setText(R.string.require_session);
+            return text;
+        }
+        
         View v = inflater.inflate(R.layout.movie_list, null);
         gridView = (GridView)v.findViewById(R.id.gridView);
         gridView.setAdapter(adapter);
@@ -128,6 +136,9 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     public void onActivityCreated(Bundle args) 
     {
         super.onActivityCreated(args);
+        
+        if (requireSession && !MovieDbApp.getUserUtils().isLoggedIn()) 
+            return;
         
         pagedMovieSet = MovieDbApp.getPagedMovieSet(movieListType);
         if (pagedMovieSet != null) {

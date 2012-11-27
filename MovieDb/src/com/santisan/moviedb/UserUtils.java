@@ -114,7 +114,10 @@ public class UserUtils
             return;
         }
      
-        if (authToken == null) return;
+        if (authToken == null) {
+            listener.onError();
+            return;
+        }
         
         client.getSession(authToken.getRequestToken(), new MovieDbResultListener<Session>() {            
             @Override

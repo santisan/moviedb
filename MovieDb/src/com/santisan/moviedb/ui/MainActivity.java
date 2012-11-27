@@ -75,6 +75,9 @@ public class MainActivity extends SherlockFragmentActivity
     
     private void getNewSession()
     {        
+        if (userUtils.isLoggedIn() || userUtils.getAuthToken() == null)
+            return;
+        
         if (progressDialog == null) {
             progressDialog = new ProgressDialog(this);
             progressDialog.setCancelable(false);
@@ -86,7 +89,7 @@ public class MainActivity extends SherlockFragmentActivity
         userUtils.getNewSession(loginListener);
     }
     
-    /*@Override
+    @Override
     protected void onRestart() {
         super.onRestart();
         userUtils.getNewSession(loginListener);
@@ -96,7 +99,7 @@ public class MainActivity extends SherlockFragmentActivity
     protected void onResume() {
         super.onResume();
         userUtils.getNewSession(loginListener);
-    }*/
+    }
 
     @Override
     protected void onSaveInstanceState(Bundle state) 
