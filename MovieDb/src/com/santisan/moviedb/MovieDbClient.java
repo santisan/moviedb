@@ -5,27 +5,29 @@ package com.santisan.moviedb;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
 
-import android.net.http.AndroidHttpClient;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.github.ignition.support.http.IgnitedHttp;
+import com.github.ignition.support.http.IgnitedHttpRequest;
+import com.github.ignition.support.http.IgnitedHttpResponse;
+import com.github.ignition.support.http.cache.CachedHttpResponse;
+import com.github.ignition.support.http.cache.HttpResponseCache;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.santisan.moviedb.model.Account;
 import com.santisan.moviedb.model.AuthToken;
 import com.santisan.moviedb.model.Config;
@@ -52,6 +54,8 @@ public class MovieDbClient
     
     private Gson gson = new Gson();
     private String url;
+    private IgnitedHttp http;
+    
     private static Map<MovieListType, String> movieListUrls = new HashMap<MovieListType, String>();    
     {
         movieListUrls.put(MovieListType.NowPlaying, "/movie/now_playing");
@@ -59,6 +63,12 @@ public class MovieDbClient
         movieListUrls.put(MovieListType.TopRated, "/movie/top_rated");
         movieListUrls.put(MovieListType.Upcoming, "/movie/upcoming");
         movieListUrls.put(MovieListType.Watchlist, "/account/{id}/movie_watchlist");
+    }
+    
+    public MovieDbClient(Context context) 
+    {
+        http = new IgnitedHttp(context);
+        http.enableResponseCache(context, 3, 30, 1, HttpResponseCache.DISK_CACHE_INTERNAL);
     }
     
     public void getMovieList(MovieListType type, boolean requireSession, MovieDbResultListener<PagedMovieSet> listener) {
@@ -298,6 +308,110 @@ public class MovieDbClient
         url = BASE_URL + url;
         Log.d(TAG, "url: " + url);
                         
+        String acceptType = "application/json";
+        String contentType = "application/json"; //acceptType + "; charset=" + HTTP.UTF_8;
+        http.setDefaultHeader("Accept", acceptType);
+        http.setDefaultHeader("Content-Type", contentType);
+        T result = null;        
+        IgnitedHttpRequest request = null;   
+        
+        try {
+            if (httpMethod == HttpMethod.GET) {
+                request = http.get(url, true);
+            }
+            else if (httpMethod == HttpMethod.POST) 
+            {                  
+                if (jsonParams != null && jsonParams.size() > 0) 
+                {
+                    StringBuilder builder = new StringBuilder();
+                    for (Object param : jsonParams) {
+                        gson.toJson(param, builder);
+                    }
+                    String body = builder.toString();
+                    StringEntity payload = new StringEntity(body, HTTP.UTF_8);
+                    request = http.post(url, payload);
+                    Log.d(TAG, "POST request body: " + body);
+                }
+                request = http.post(url);
+            }        
+            
+            IgnitedHttpResponse response = request.retries(3).send();   
+            Log.d(TAG, "response cached? " + (response instanceof CachedHttpResponse));
+            final int statusCode = response.getStatusCode();
+            
+            if ((statusCode / 100) != 2) {
+                Log.e(TAG, "Error " + statusCode + " for URL " + url);
+            }
+            else {
+                String json = response.getResponseBodyAsString();
+                result = gson.fromJson(json, classOfT);
+                if (result != null) 
+                {            
+                    if (AuthToken.class.isInstance(result)) 
+                    {
+                        String headerName = "Authentication-Callback";
+                        HttpResponse wrappedResponse = response.unwrap();
+                        if (wrappedResponse.containsHeader(headerName))
+                            ((AuthToken)result).setAuthCallback(wrappedResponse.getFirstHeader(headerName).getValue());
+                    } 
+                    
+                    Log.d(TAG, "response: " + json);
+                }
+                else {
+                    Log.e(TAG, "Error, unable to deserialize json response");
+                }                
+            }
+        } 
+        catch(SocketException e) {            
+            handleError(e);
+            return null;
+        }
+        catch(IOException e) {            
+            handleError(e);
+            return null;
+        }
+        catch(JsonSyntaxException e) {            
+            handleError(e);
+            return null;
+        }
+        
+        return result;
+    }
+    
+    private void handleError(Exception e) {
+        Log.e(TAG, "Error for URL " + url + " " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    public static String encodeUrl(String s) {
+        String encoded = null;
+        try {
+            if (s == null) s = "";
+            encoded = URLEncoder.encode(s, HTTP.UTF_8);
+        }
+        catch (UnsupportedEncodingException exc) {
+            exc.printStackTrace();
+            Log.e(TAG, exc.getMessage());
+        }
+        return encoded;
+    }
+    
+    /*private <T> T makeRequest(String url, HttpMethod httpMethod, Class<T> classOfT, List<NameValuePair> params,
+            List<Object> jsonParams)
+    {
+        params.add(new NameValue("api_key", API_KEY));
+        
+        int numParams = params.size();
+        for (int i=0; i < numParams; i++) 
+        {
+            String separator = (i == 0) ? "?" : "&";
+            NameValuePair param = params.get(i);
+            url += separator + param.getName() + "=" + encodeUrl(param.getValue());
+        }  
+        
+        url = BASE_URL + url;
+        Log.d(TAG, "url: " + url);
+                        
         AndroidHttpClient httpClient = AndroidHttpClient.newInstance("com.santisan.moviedb");
         String acceptType = "application/json";
         String contentType = "application/json"; //acceptType + "; charset=" + HTTP.UTF_8;
@@ -350,10 +464,10 @@ public class MovieDbClient
                         } 
                         
                         Log.d(TAG, "response: " + json);
-                        /*Log.d(TAG, "headers:");
-                        for (Header h : response.getAllHeaders()) {
-                            Log.d(TAG, h.getName() + ": " + h.getValue());
-                        } */
+                        //Log.d(TAG, "headers:");
+                        //for (Header h : response.getAllHeaders()) {
+                        //    Log.d(TAG, h.getName() + ": " + h.getValue());
+                        //}
                     }
                     else {
                         Log.e(TAG, "Error, unable to deserialize json response");
@@ -377,20 +491,7 @@ public class MovieDbClient
             httpClient.close();
         }        
         return result;
-    }
-    
-    public static String encodeUrl(String s) {
-        String encoded = null;
-        try {
-            if (s == null) s = "";
-            encoded = URLEncoder.encode(s, HTTP.UTF_8);
-        }
-        catch (UnsupportedEncodingException exc) {
-            exc.printStackTrace();
-            Log.e(TAG, exc.getMessage());
-        }
-        return encoded;
-    }
+    }*/  
     
     /*private <T> T makeRequest(String url, Class<T> cls, Map<String, Object> params)
     {        

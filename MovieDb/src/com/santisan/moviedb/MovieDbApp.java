@@ -42,7 +42,7 @@ public class MovieDbApp extends Application
     
     private void loadConfig() 
     {
-        MovieDbClient client = new MovieDbClient();
+        MovieDbClient client = new MovieDbClient(this);
         client.getConfig(new MovieDbResultListener<Config>() {            
             @Override
             public void onResult(Config result) 

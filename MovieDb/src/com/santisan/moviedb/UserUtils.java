@@ -34,10 +34,11 @@ public class UserUtils
     private Account account;
     private SparseIntArray watchlist = new SparseIntArray();
     private SharedPreferences sharedPreferences;
-    private MovieDbClient client = new MovieDbClient();
+    private MovieDbClient client;
     
     public UserUtils(Context context)
     {
+        client = new MovieDbClient(context);
         sharedPreferences = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
         String sessionId = sharedPreferences.getString(KEY_SESSION_ID, null);        
         if (!Utils.isNullOrWhitespace(sessionId)) {

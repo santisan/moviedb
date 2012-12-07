@@ -4,6 +4,7 @@
 package com.santisan.moviedb.ui;
 
 import java.util.List;
+import java.util.Locale;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -73,6 +74,7 @@ public class MovieDetailFragment extends SherlockFragment
     private MovieListType movieListType;
     private Movie movie = null;
     private BitmapLoader imageLoader;
+    private MovieDbClient client;
 
     private DisplayMetrics displayMetrics;
     private WindowManager windowManager;      
@@ -93,6 +95,7 @@ public class MovieDetailFragment extends SherlockFragment
     {
         super.onCreate(savedInstanceState);
         imageLoader = new BitmapLoaderAsync(false);       
+        client = new MovieDbClient(getSherlockActivity());        
         
         displayMetrics = new DisplayMetrics();         
         windowManager = (WindowManager)getSherlockActivity().getSystemService(Context.WINDOW_SERVICE);
@@ -166,7 +169,6 @@ public class MovieDetailFragment extends SherlockFragment
             return;
         }
         
-        MovieDbClient client = new MovieDbClient();
         client.getMovieFull(movieId, new MovieDbResultListener<Movie>() {
             @Override
             public void onResult(Movie result)
@@ -276,13 +278,12 @@ public class MovieDetailFragment extends SherlockFragment
         getSherlockActivity().setSupportProgressBarIndeterminateVisibility(true);        
         final boolean addToWatchlist = !movie.isInWatchlist();
         WatchlistMovie watchlistMovie = new WatchlistMovie(movie.getId(), addToWatchlist);
-        
-        MovieDbClient client = new MovieDbClient();
+                
         client.addOrRemoveFromWatchlist(watchlistMovie, new MovieDbResultListener<PostResponse>() {            
             @Override
             public void onResult(PostResponse result) 
             {
-                if (!result.getStatusMessage().toLowerCase().equals("success")) {
+                if (!result.getStatusMessage().toLowerCase(Locale.US).equals("success")) {
                     Toast.makeText(getSherlockActivity(), R.string.operation_failed, 
                             Toast.LENGTH_SHORT).show();
                 }

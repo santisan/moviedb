@@ -112,7 +112,7 @@ public class MovieDetailActivity extends SherlockFragmentActivity
         {
             if (movieSet.getPage() < movieSet.getTotalPages() && position + 3 >= movieSet.getMovies().size())
             {               
-                MovieDbClient client = new MovieDbClient();
+                MovieDbClient client = new MovieDbClient(MovieDetailActivity.this);
                 client.getMovieList(movieListType, movieSet.getPage() + 1, requireSession,
                         new MovieDbResultListener<PagedMovieSet>() 
                 {               

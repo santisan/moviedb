@@ -15,7 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.WindowManager;
-import android.widget.AbsListView;
+import android.widget.AbsListView.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -25,7 +25,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar.LayoutParams;
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.santisan.moviedb.BitmapLoader;
 import com.santisan.moviedb.BitmapLoaderAsync;
@@ -58,7 +58,7 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     private MovieListType movieListType;
     private boolean requireSession = false;
     private int numMovies = -1;
-    private MovieDbClient client = new MovieDbClient();
+    private MovieDbClient client;
     
     private int itemWidth;
     private int itemHeight;
@@ -91,6 +91,7 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
     public void onCreate(Bundle savedInstanceState) 
     {
         super.onCreate(savedInstanceState);
+        client = new MovieDbClient(getSherlockActivity());
         adapter = new MoviesAdapter(getSherlockActivity());
         imageLoader = new BitmapLoaderAsync(false);
         
@@ -229,13 +230,13 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
         private int itemWidth;
         private int itemHeight;
         private int numColumns = 0;        
-        private AbsListView.LayoutParams layoutParams;
+        private ActionBar.LayoutParams layoutParams;
         
         public MoviesAdapter(Context ctx)
         {
             super();
             inflater = (LayoutInflater)ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            layoutParams = new AbsListView.LayoutParams(itemWidth, itemHeight);
+            layoutParams = new ActionBar.LayoutParams(itemWidth, itemHeight);
         }       
 
         @Override
@@ -259,7 +260,6 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
             if (pagedMovieSet.getPage() < pagedMovieSet.getTotalPages() && position >= pagedMovieSet.getMovies().size())
             {
                 //fetch more results
-                MovieDbClient client = new MovieDbClient();                
                 client.getMovieList(movieListType, pagedMovieSet.getPage() + 1, requireSession,
                         new MovieDbResultListener<PagedMovieSet>() 
                 {
@@ -359,7 +359,7 @@ public class MovieListFragment extends SherlockFragment implements OnItemClickLi
             
             itemWidth = width;
             itemHeight = height;
-            layoutParams = new AbsListView.LayoutParams(itemWidth, itemHeight);
+            layoutParams = new ActionBar.LayoutParams(itemWidth, itemHeight);
             notifyDataSetChanged();
         }
         
